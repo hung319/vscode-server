@@ -1,0 +1,9 @@
+version: "3.9" # Phiên bản docker-compose
+services:
+  vscode-server:
+    image: hung319/vscode-server:latest # Sử dụng image đã push lên Docker Hub
+    ports:
+      - 8585:8585 # Map port 8585 của container với port 8585 của host
+    environment:
+      - PORT=8585 # Thiết lập biến môi trường PORT
+      - TOKEN=yourtoken # Thiết lập biến môi trường TOKEN (thay your_token bằng token của bạn)
