@@ -1,7 +1,12 @@
 version: "3.9" # Phiên bản docker-compose
 services:
   vscode-server:
-    image: hung319/vscode-server:latest # Sử dụng image đã push lên Docker Hub
+    image: ghcr.io/hung319/vscode-server:latest # Sử dụng image đã push lên Docker Hub
     ports:
       - 8585:8585 # Map port 8585 của container với port 8585 của host
+    volumes:
+      - ./data:/data # Gắn thư mục data trên host vào container
+      - /var/run/docker.sock:/var/run/docker.sock
 networks: {}
+volumes:
+  data: # Khai báo volume để lưu trữ dữ liệu
