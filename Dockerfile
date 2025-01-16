@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM debian:latest 
 
 # Cài đặt các gói cần thiết và Visual Studio Code
 RUN apt-get update && apt-get install -y software-properties-common apt-transport-https wget gpg
