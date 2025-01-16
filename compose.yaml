@@ -9,4 +9,4 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 networks: {}
 volumes:
-  data: # Khai báo volume để lưu trữ dữ liệu
+  Code: # Khai báo volume để lưu trữ dữ liệu
