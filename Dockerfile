@@ -11,4 +11,4 @@ RUN apt-get update && apt-get install -y code
 WORKDIR /workspace
 
 EXPOSE 8585
-CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--connection-token", "11042006"]
+CMD ["code", "--folder-uri", "file:///workspace", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--connection-token", "11042006"]
