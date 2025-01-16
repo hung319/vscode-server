@@ -9,4 +9,4 @@ RUN rm -f packages.microsoft.gpg
 RUN apt-get update && apt-get install -y code
 
 EXPOSE 8585
-CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--server-data-dir", "/workspace", "--connection-token", "11042006"]
+CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--user-data-dir", "/workspace", "--connection-token", "11042006"]
