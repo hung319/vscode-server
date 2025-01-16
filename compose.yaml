@@ -5,7 +5,7 @@ services:
     ports:
       - 8585:8585 # Map port 8585 của container với port 8585 của host
     volumes:
-      - ./data:/data # Gắn thư mục data trên host vào container
+      - ./Code:/workspace # Gắn thư mục data trên host vào container
       - /var/run/docker.sock:/var/run/docker.sock
 networks: {}
 volumes:
