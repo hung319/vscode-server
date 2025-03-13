@@ -8,10 +8,7 @@ RUN echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.micro
 RUN rm -f packages.microsoft.gpg
 RUN apt-get update && apt-get install -y code
 
-# Ensure code-tunnel is available
-RUN apt-get install -y code-tunnel
-
 EXPOSE 8585
 
 # Set the default workspace directory
-CMD ["code-tunnel", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--connection-token", "11042006", "--folder-uri", "file:///workspace"]
+CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--connection-token", "11042006", "--folder-uri", "file:///workspace"]
