@@ -8,6 +8,9 @@ RUN echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.micro
 RUN rm -f packages.microsoft.gpg
 RUN apt-get update && apt-get install -y code
 RUN mkdir /workspace && cd /workspace
+RUN export PWD=/workspace
+RUN export VSCODE_CWD=/workspace
+RUN source ~/.bashrc
 
 EXPOSE 8585
 CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--connection-token", "11042006"]
