@@ -11,4 +11,4 @@ RUN apt-get update && apt-get install -y code
 EXPOSE 8585
 
 # Set the default workspace directory
-CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--connection-token", "11042006", "--folder-uri", "file:///workspace"]
+CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--connection-token", "11042006", "--server-base-path", "file:///workspace"], "--server-data-dir", "file:///workspace"]
