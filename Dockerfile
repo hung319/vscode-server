@@ -1,4 +1,4 @@
-FROM debian:latest 
+FROM ubuntu:latest 
 
 # Cài đặt các gói cần thiết và Visual Studio Code
 RUN apt-get update && apt-get install -y sudo software-properties-common apt-transport-https wget gpg
@@ -9,4 +9,6 @@ RUN rm -f packages.microsoft.gpg
 RUN apt-get update && apt-get install -y code
 
 EXPOSE 8585
-CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--connection-token", "11042006"]
+
+# Set the default workspace directory
+CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--connection-token", "11042006", "--folder-uri", "file:///workspace"]
