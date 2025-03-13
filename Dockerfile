@@ -9,4 +9,4 @@ RUN rm -f packages.microsoft.gpg
 RUN apt-get update && apt-get install -y code
 RUN mkdir /workspace #Tạo thư mục workspace
 
-CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--connection-token", "11042006", "--folder=/workspace"]
+CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--connection-token", "11042006"]
