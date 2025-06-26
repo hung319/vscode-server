@@ -1,10 +1,15 @@
 # =================================================================================
-# STAGE 1: Builder - Chỉ tải và giải nén bản VS Code Server độc lập
+# STAGE 1: Builder - Tải và giải nén bản VS Code Server độc lập
 # =================================================================================
 FROM debian:bullseye-slim AS builder
 
-# Cài các công cụ cần thiết: curl để tải, tar để giải nén
-RUN apt-get update && apt-get install -y curl tar --no-install-recommends && rm -rf /var/lib/apt/lists/*
+# SỬA LỖI: Thêm 'ca-certificates' vào đây để curl có thể xác thực SSL/TLS
+RUN apt-get update && apt-get install -y \
+    curl \
+    tar \
+    ca-certificates \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /tmp
 
@@ -29,6 +34,7 @@ ENV VSCODE_TOKEN=11042006
 ENV WORKSPACE_DIR=/workspace
 
 # Cài đặt các thư viện cần thiết để VS Code có thể chạy
+# (Giữ ca-certificates ở đây vẫn là một good practice cho runtime)
 RUN apt-get update && apt-get install -y \
     libx11-6 \
     libxkbfile1 \
@@ -56,10 +62,9 @@ WORKDIR ${WORKSPACE_DIR}
 EXPOSE ${VSCODE_PORT}
 
 # Lệnh để khởi động VS Code web server
-# Lưu ý: đường dẫn đến file thực thi 'code' đã thay đổi
+# CẢI TIẾN: Bỏ cờ --without-connection-token để tránh xung đột với token bạn đã đặt
 CMD /vscode-server/bin/code serve-web \
     --host 0.0.0.0 \
     --port ${VSCODE_PORT} \
     --connection-token ${VSCODE_TOKEN} \
-    --user-data-dir /home/vscode/.vscode-server \
-    --without-connection-token
+    --user-data-dir /home/vscode/.vscode-server
