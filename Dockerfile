@@ -1,5 +1,5 @@
 # =================================================================================
-# STAGE 1: Builder - Tải và giải nén bản VS Code Server độc lập
+# STAGE 1: Builder - Tải, giải nén và chuẩn hóa tên thư mục
 # =================================================================================
 FROM debian:bullseye-slim AS builder
 
@@ -22,6 +22,10 @@ RUN case ${TARGETARCH} in \
     && curl -L "https://update.code.visualstudio.com/latest/server-linux-${ARCH}/stable" --output vscode-server.tar.gz \
     && tar -xzf vscode-server.tar.gz
 
+# *** THAY ĐỔI QUAN TRỌNG NHẤT ***
+# Đổi tên thư mục vừa giải nén thành một cái tên cố định và dễ đoán
+RUN mv vscode-server-linux-* vscode-server-final
+
 # =================================================================================
 # STAGE 2: Final Image - Tạo image cuối cùng để chạy
 # =================================================================================
@@ -32,7 +36,7 @@ ENV VSCODE_PORT=8585
 ENV VSCODE_TOKEN=11042006
 ENV WORKSPACE_DIR=/workspace
 
-# Cài đặt các thư viện cần thiết để VS Code có thể chạy
+# Cài đặt các thư viện cần thiết
 RUN apt-get update && apt-get install -y \
     libx11-6 \
     libxkbfile1 \
@@ -44,8 +48,8 @@ RUN apt-get update && apt-get install -y \
     && useradd -ms /bin/bash vscode \
     && rm -rf /var/lib/apt/lists/*
 
-# SỬA LỖI: Thêm dấu "/" vào cuối đường dẫn nguồn để copy NỘI DUNG của thư mục
-COPY --from=builder /tmp/vscode-server-linux-*/ /vscode-server
+# Sao chép thư mục đã được đổi tên một cách chính xác
+COPY --from=builder /tmp/vscode-server-final /vscode-server
 
 RUN mkdir -p ${WORKSPACE_DIR} /home/vscode/.vscode-server \
     && chown -R vscode:vscode /vscode-server ${WORKSPACE_DIR} /home/vscode
@@ -59,7 +63,7 @@ WORKDIR ${WORKSPACE_DIR}
 # Thông báo port sẽ được sử dụng
 EXPOSE ${VSCODE_PORT}
 
-# Lệnh để khởi động VS Code web server (giữ nguyên)
+# Lệnh để khởi động VS Code web server
 CMD /vscode-server/bin/code serve-web \
     --host 0.0.0.0 \
     --port ${VSCODE_PORT} \
