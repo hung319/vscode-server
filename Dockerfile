@@ -3,16 +3,15 @@
 # =========================================================================
 FROM debian:bullseye-slim AS builder
 
-# Cài đặt các gói cần thiết cho việc tải và cài đặt VS Code
-# Thêm 'curl' vào danh sách cài đặt
+# Cài đặt các gói cần thiết, BỔ SUNG 'ca-certificates' để xác thực SSL/TLS
 RUN apt-get update && apt-get install -y \
     curl \
     gpg \
+    ca-certificates \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Tải, xác thực và thêm repo của Microsoft
-# *** DÙNG CURL THAY THẾ CHO WGET Ở ĐÂY ***
+# Tải, xác thực và thêm repo của Microsoft (giữ nguyên không đổi)
 RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg \
     && install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg \
     && echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list \
@@ -39,6 +38,8 @@ RUN apt-get update && apt-get install -y \
     libnss3 \
     libnspr4 \
     libasound2 \
+    # Gói ca-certificates cũng cần thiết ở đây để ứng dụng có thể kết nối HTTPS
+    ca-certificates \
     && useradd -ms /bin/bash vscode \
     && rm -rf /var/lib/apt/lists/*
 
