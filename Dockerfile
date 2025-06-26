@@ -50,6 +50,10 @@ USER vscode
 WORKDIR ${WORKSPACE_DIR}
 EXPOSE ${VSCODE_PORT}
 
-# THAY ĐỔI DUY NHẤT Ở ĐÂY ĐỂ DEBUG
-# CMD /vscode-server/bin/code serve-web ... (Dòng cũ bị vô hiệu hóa)
-CMD ["tail", "-f", "/dev/null"]
+# *** THAY ĐỔI DUY NHẤT VÀ CUỐI CÙNG LÀ Ở ĐÂY ***
+# Gọi đúng tên file thực thi là "code-server"
+CMD /vscode-server/bin/code-server serve-web \
+    --host 0.0.0.0 \
+    --port ${VSCODE_PORT} \
+    --connection-token ${VSCODE_TOKEN} \
+    --user-data-dir /home/vscode/.vscode-server
