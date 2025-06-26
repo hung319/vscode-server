@@ -1,36 +1,34 @@
-# =========================================================================
-# STAGE 1: Builder - Giai đoạn cài đặt các công cụ và download VS Code
-# =========================================================================
+# =================================================================================
+# STAGE 1: Builder - Chỉ tải và giải nén bản VS Code Server độc lập
+# =================================================================================
 FROM debian:bullseye-slim AS builder
 
-# Cài đặt các gói cần thiết, BỔ SUNG 'ca-certificates' để xác thực SSL/TLS
-RUN apt-get update && apt-get install -y \
-    curl \
-    gpg \
-    ca-certificates \
-    --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/*
+# Cài các công cụ cần thiết: curl để tải, tar để giải nén
+RUN apt-get update && apt-get install -y curl tar --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Tải, xác thực và thêm repo của Microsoft (giữ nguyên không đổi)
-RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg \
-    && install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg \
-    && echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list \
-    && rm -f packages.microsoft.gpg
+WORKDIR /tmp
 
-# Cài đặt VS Code
-RUN apt-get update && apt-get install -y code --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/*
+# Docker tự động cung cấp biến TARGETARCH (amd64, arm64, etc.)
+# Chúng ta sẽ dùng nó để tải đúng phiên bản cho kiến trúc CPU
+ARG TARGETARCH
+RUN case ${TARGETARCH} in \
+        "amd64") ARCH="x64" ;; \
+        "arm64") ARCH="arm64" ;; \
+    esac \
+    && curl -L "https://update.code.visualstudio.com/latest/server-linux-${ARCH}/stable" --output vscode-server.tar.gz \
+    && tar -xzf vscode-server.tar.gz
 
-# =========================================================================
-# STAGE 2: Final Image - Giai đoạn tạo image cuối cùng để chạy
-# (Phần này giữ nguyên không thay đổi)
-# =========================================================================
+# =================================================================================
+# STAGE 2: Final Image - Tạo image cuối cùng để chạy
+# =================================================================================
 FROM debian:bullseye-slim
 
+# Thiết lập các biến môi trường với giá trị mặc định
 ENV VSCODE_PORT=8585
 ENV VSCODE_TOKEN=11042006
 ENV WORKSPACE_DIR=/workspace
 
+# Cài đặt các thư viện cần thiết để VS Code có thể chạy
 RUN apt-get update && apt-get install -y \
     libx11-6 \
     libxkbfile1 \
@@ -38,23 +36,30 @@ RUN apt-get update && apt-get install -y \
     libnss3 \
     libnspr4 \
     libasound2 \
-    # Gói ca-certificates cũng cần thiết ở đây để ứng dụng có thể kết nối HTTPS
     ca-certificates \
     && useradd -ms /bin/bash vscode \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /usr/share/code /usr/share/code
-COPY --from=builder /usr/bin/code /usr/bin/code
+# Sao chép toàn bộ thư mục VS Code Server đã được giải nén từ stage builder
+COPY --from=builder /tmp/vscode-server-linux-* /vscode-server
 
 RUN mkdir -p ${WORKSPACE_DIR} /home/vscode/.vscode-server \
-    && chown -R vscode:vscode /home/vscode ${WORKSPACE_DIR}
+    && chown -R vscode:vscode /vscode-server ${WORKSPACE_DIR} /home/vscode
 
+# Chuyển sang user không phải root
 USER vscode
+
+# Đặt thư mục làm việc mặc định
 WORKDIR ${WORKSPACE_DIR}
+
+# Thông báo port sẽ được sử dụng
 EXPOSE ${VSCODE_PORT}
 
-CMD code serve-web \
+# Lệnh để khởi động VS Code web server
+# Lưu ý: đường dẫn đến file thực thi 'code' đã thay đổi
+CMD /vscode-server/bin/code serve-web \
     --host 0.0.0.0 \
     --port ${VSCODE_PORT} \
     --connection-token ${VSCODE_TOKEN} \
-    --user-data-dir /home/vscode/.vscode-server
+    --user-data-dir /home/vscode/.vscode-server \
+    --without-connection-token
