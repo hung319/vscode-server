@@ -3,7 +3,7 @@
 # =================================================================================
 FROM debian:bullseye-slim AS builder
 
-# SỬA LỖI: Thêm 'ca-certificates' vào đây để curl có thể xác thực SSL/TLS
+# Cài các công cụ cần thiết để tải và xác thực
 RUN apt-get update && apt-get install -y \
     curl \
     tar \
@@ -13,8 +13,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /tmp
 
-# Docker tự động cung cấp biến TARGETARCH (amd64, arm64, etc.)
-# Chúng ta sẽ dùng nó để tải đúng phiên bản cho kiến trúc CPU
+# Tải đúng phiên bản cho kiến trúc CPU
 ARG TARGETARCH
 RUN case ${TARGETARCH} in \
         "amd64") ARCH="x64" ;; \
@@ -28,13 +27,12 @@ RUN case ${TARGETARCH} in \
 # =================================================================================
 FROM debian:bullseye-slim
 
-# Thiết lập các biến môi trường với giá trị mặc định
+# Thiết lập các biến môi trường
 ENV VSCODE_PORT=8585
 ENV VSCODE_TOKEN=11042006
 ENV WORKSPACE_DIR=/workspace
 
 # Cài đặt các thư viện cần thiết để VS Code có thể chạy
-# (Giữ ca-certificates ở đây vẫn là một good practice cho runtime)
 RUN apt-get update && apt-get install -y \
     libx11-6 \
     libxkbfile1 \
@@ -46,8 +44,8 @@ RUN apt-get update && apt-get install -y \
     && useradd -ms /bin/bash vscode \
     && rm -rf /var/lib/apt/lists/*
 
-# Sao chép toàn bộ thư mục VS Code Server đã được giải nén từ stage builder
-COPY --from=builder /tmp/vscode-server-linux-* /vscode-server
+# SỬA LỖI: Thêm dấu "/" vào cuối đường dẫn nguồn để copy NỘI DUNG của thư mục
+COPY --from=builder /tmp/vscode-server-linux-*/ /vscode-server
 
 RUN mkdir -p ${WORKSPACE_DIR} /home/vscode/.vscode-server \
     && chown -R vscode:vscode /vscode-server ${WORKSPACE_DIR} /home/vscode
@@ -61,8 +59,7 @@ WORKDIR ${WORKSPACE_DIR}
 # Thông báo port sẽ được sử dụng
 EXPOSE ${VSCODE_PORT}
 
-# Lệnh để khởi động VS Code web server
-# CẢI TIẾN: Bỏ cờ --without-connection-token để tránh xung đột với token bạn đã đặt
+# Lệnh để khởi động VS Code web server (giữ nguyên)
 CMD /vscode-server/bin/code serve-web \
     --host 0.0.0.0 \
     --port ${VSCODE_PORT} \
