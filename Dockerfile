@@ -1,7 +1,7 @@
 # --- Giai đoạn 1: "Builder" ---
 # Giai đoạn này dùng để cài đặt tất cả các công cụ cần thiết và tải về VS Code.
-# Chúng ta sử dụng một base image đầy đủ để có các công cụ build.
-FROM debian:latest AS builder
+# Sử dụng phiên bản Debian cụ thể (bookworm) để đảm bảo tính ổn định.
+FROM debian:bookworm AS builder
 
 # Thiết lập các biến môi trường
 ENV DEBIAN_FRONTEND=noninteractive
@@ -23,14 +23,13 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Giải nén file .deb để lấy các file thực thi của VS Code
-# Điều này cho phép chúng ta sao chép chính xác những gì cần thiết mà không cần cài đặt đầy đủ.
 RUN dpkg-deb -x code_*.deb /opt/vscode
 
 
 # --- Giai đoạn 2: "Final" ---
 # Giai đoạn này sẽ tạo ra image cuối cùng, chỉ chứa những gì cần thiết để chạy VS Code server.
-# Chúng ta sử dụng một base image nhỏ gọn (slim) để giảm dung lượng.
-FROM debian:slim
+# Sử dụng phiên bản slim cụ thể (bookworm-slim) để giảm dung lượng và đảm bảo build thành công.
+FROM debian:bookworm-slim
 
 # Các biến môi trường cần thiết cho runtime
 ENV PORT=8585
