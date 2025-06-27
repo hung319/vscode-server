@@ -50,10 +50,10 @@ USER vscode
 WORKDIR ${WORKSPACE_DIR}
 EXPOSE ${VSCODE_PORT}
 
-# *** THAY ĐỔI DUY NHẤT VÀ CUỐI CÙNG LÀ Ở ĐÂY ***
-# Gọi đúng tên file thực thi là "code-server"
+# THÊM CỜ ĐỂ ĐỒNG Ý VỚI ĐIỀU KHOẢN SỬ DỤNG
 CMD /vscode-server/bin/code-server serve-web \
     --host 0.0.0.0 \
     --port ${VSCODE_PORT} \
     --connection-token ${VSCODE_TOKEN} \
-    --user-data-dir /home/vscode/.vscode-server
+    --user-data-dir /home/vscode/.vscode-server \
+    --accept-server-license-terms
