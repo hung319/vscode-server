@@ -53,7 +53,7 @@ EXPOSE ${VSCODE_PORT}
 CMD /vscode-server/bin/code-server serve-web \
     --host 0.0.0.0 \
     --port ${VSCODE_PORT} \
-    --log debug \
+    --log error \
     --user-data-dir /home/vscode/.vscode-server \
     --accept-server-license-terms \
     --without-connection-token
