@@ -14,7 +14,7 @@ RUN dpkg-deb -x code_*.deb /opt/vscode
 # --- Giai đoạn 2: "Final" ---
 FROM debian:bookworm-slim
 ENV PORT=8585
-ENV TOKEN=11042006
+ENV TOKEN
 ENV WS=/workspace
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -42,6 +42,4 @@ RUN useradd -ms /bin/bash coder && \
 USER coder
 WORKDIR $WS
 
-# --- THAY ĐỔI Ở ĐÂY ---
-# Thêm "/workspace" vào cuối để chỉ định thư mục mặc định khi khởi động
-CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--connection-token", "11042006", "--default-workspace", "~/workspace"]
+CMD code serve-web --host 0.0.0.0 --port "$PORT" --connection-token "$TOKEN"
