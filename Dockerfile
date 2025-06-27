@@ -18,4 +18,4 @@ RUN useradd -ms /bin/bash coder && \
 USER coder
 WORKDIR $WS
 
-CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "$PORT", "--connection-token", "$TOKEN"]
+CMD code serve-web --host 0.0.0.0 --port "$PORT" --connection-token "$TOKEN"
