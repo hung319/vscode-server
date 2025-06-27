@@ -33,6 +33,7 @@ FROM debian:bookworm-slim
 
 # Các biến môi trường cần thiết cho runtime
 ENV PORT=8585
+# Lưu ý: Nên truyền TOKEN vào lúc chạy thay vì hardcode trong file
 ENV TOKEN=11042006
 ENV WS=/workspace
 ENV DEBIAN_FRONTEND=noninteractive
@@ -49,6 +50,10 @@ RUN apt-get update && \
     libgtk-3-0 \
     libnspr4 \
     libnss3 \
+    # ---- BỔ SUNG CÁC THƯ VIỆN CÒN THIẾU ----
+    libgbm1 \
+    libasound2 \
+    libatspi2.0-0 \
     # Dọn dẹp cache
     && rm -rf /var/lib/apt/lists/*
 
