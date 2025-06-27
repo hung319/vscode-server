@@ -1,9 +1,9 @@
 # =========================================================================
-# STAGE 1: Builder - Cài đặt gói VS Code Desktop (đã được chứng minh là hoạt động)
+# STAGE 1: Builder - Cài đặt gói VS Code Desktop
 # =========================================================================
 FROM debian:bullseye-slim AS builder
 
-# Cài các gói cần thiết để thêm repo và cài đặt 'code'
+# Cài các gói cần thiết
 RUN apt-get update && apt-get install -y \
     curl \
     gpg \
@@ -11,10 +11,11 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Thêm kho của Microsoft
+# Thêm kho của Microsoft với kiến trúc được xác định động
+# *** SỬA LỖI QUAN TRỌNG NHẤT LÀ Ở ĐÂY ***
 RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg \
     && install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg \
-    && echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list \
     && rm -f packages.microsoft.gpg
 
 # Cài đặt gói 'code'
@@ -31,7 +32,7 @@ ENV VSCODE_PORT=8080
 ENV VSCODE_TOKEN=11042006
 ENV WORKSPACE_DIR=/workspace
 
-# Cài đặt các thư viện PHỤ THUỘC TỐI THIỂU để 'code' có thể chạy
+# Cài đặt các thư viện phụ thuộc tối thiểu để 'code' có thể chạy
 RUN apt-get update && apt-get install -y \
     libx11-6 \
     libxkbfile1 \
