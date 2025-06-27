@@ -1,59 +1,46 @@
-# =================================================================================
-# STAGE 1: Builder - Tải và giải nén bản VS Code Server độc lập
-# =================================================================================
-FROM debian:bullseye-slim AS builder
+# Stage 1: Base với các gói cần thiết để cài VS Code
+FROM debian:latest as base
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
+    sudo \
+    software-properties-common \
+    apt-transport-https \
+    wget \
+    gpg \
     curl \
-    tar \
-    ca-certificates \
-    --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/*
+    ca-certificates
 
-WORKDIR /tmp
+# Stage 2: Cài đặt VS Code
+FROM base as vscode-install
 
-ARG TARGETARCH
-RUN case ${TARGETARCH} in \
-        "amd64") ARCH="x64" ;; \
-        "arm64") ARCH="arm64" ;; \
-    esac \
-    && curl -L "https://update.code.visualstudio.com/latest/server-linux-${ARCH}/stable" --output vscode-server.tar.gz \
-    && tar -xzf vscode-server.tar.gz \
-    && mv vscode-server-linux-* vscode-server-final
+# Thêm key và repo
+RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/keyrings/packages.microsoft.gpg
+RUN echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list
 
-# =================================================================================
-# STAGE 2: Final Image - Tạo image cuối cùng để chạy
-# =================================================================================
-FROM debian:bullseye-slim
+RUN apt-get update && apt-get install -y code
 
-ENV VSCODE_PORT=8080
-ENV WORKSPACE_DIR=/workspace
+# Stage 3: Final image (sạch và tối ưu)
+FROM base
 
-RUN apt-get update && apt-get install -y \
-    libx11-6 \
-    libxkbfile1 \
-    libsecret-1-0 \
-    libnss3 \
-    libnspr4 \
-    libasound2 \
-    ca-certificates \
-    && useradd -ms /bin/bash vscode \
-    && rm -rf /var/lib/apt/lists/*
+# Copy VS Code từ stage trước
+COPY --from=vscode-install /usr/bin/code /usr/bin/code
+COPY --from=vscode-install /usr/share/code /usr/share/code
+COPY --from=vscode-install /usr/lib/code /usr/lib/code
 
-COPY --from=builder /tmp/vscode-server-final /vscode-server
+# Tạo user vscode với sudo và thư mục làm việc
+RUN useradd -ms /bin/bash vscode && \
+    echo "vscode ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
+    mkdir -p /workspace && chown vscode:vscode /workspace
 
-RUN mkdir -p ${WORKSPACE_DIR} /home/vscode/.vscode-server \
-    && chown -R vscode:vscode /vscode-server ${WORKSPACE_DIR} /home/vscode
-
+# Đặt user và thư mục làm việc
 USER vscode
-WORKDIR ${WORKSPACE_DIR}
-EXPOSE ${VSCODE_PORT}
+WORKDIR /workspace
 
-# *** LỆNH CMD HOÀN CHỈNH CUỐI CÙNG ***
-CMD /vscode-server/bin/code-server serve-web \
-    --host 0.0.0.0 \
-    --port ${VSCODE_PORT} \
-    --log error \
-    --user-data-dir /home/vscode/.vscode-server \
-    --accept-server-license-terms \
-    --without-connection-token
+# Biến môi trường có thể override khi chạy
+ENV PORT=8585
+ENV TOKEN=11042006
+
+# Lệnh mặc định chạy code-server
+CMD ["sh", "-c", "code serve-web --host 0.0.0.0 --port $PORT --connection-token $TOKEN --folder-uri file:///workspace"]
