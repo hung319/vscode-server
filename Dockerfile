@@ -14,7 +14,6 @@ RUN dpkg-deb -x code_*.deb /opt/vscode
 # --- Giai đoạn 2: "Final" ---
 FROM debian:bookworm-slim
 ENV PORT=8585
-ENV TOKEN
 ENV WS=/workspace
 ENV DEBIAN_FRONTEND=noninteractive
 
