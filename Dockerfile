@@ -44,4 +44,4 @@ WORKDIR $WS
 
 # --- THAY ĐỔI Ở ĐÂY ---
 # Thêm "/workspace" vào cuối để chỉ định thư mục mặc định khi khởi động
-CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--connection-token", "11042006", "/workspace"]
+CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "8585", "--connection-token", "11042006", "--default-folder", "./workspace"]
