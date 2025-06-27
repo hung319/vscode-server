@@ -1,5 +1,5 @@
-# Stage 1: Base với các gói cần thiết để cài VS Code
-FROM debian:latest as base
+# Stage 1: Base với các gói cần thiết
+FROM debian:latest AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -12,35 +12,26 @@ RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates
 
-# Stage 2: Cài đặt VS Code
-FROM base as vscode-install
-
-# Thêm key và repo
-RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/keyrings/packages.microsoft.gpg
-RUN echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list
-
-RUN apt-get update && apt-get install -y code
-
-# Stage 3: Final image (sạch và tối ưu)
+# Stage 2: Final image, cài VSCode trực tiếp
 FROM base
 
-# Copy VS Code từ stage trước
-COPY --from=vscode-install /usr/bin/code /usr/bin/code
-COPY --from=vscode-install /usr/share/code /usr/share/code
-COPY --from=vscode-install /usr/lib/code /usr/lib/code
+# Cài key và repo VS Code
+RUN mkdir -p /etc/apt/keyrings && \
+    wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/keyrings/packages.microsoft.gpg && \
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list && \
+    apt-get update && apt-get install -y code
 
-# Tạo user vscode với sudo và thư mục làm việc
+# Tạo user vscode
 RUN useradd -ms /bin/bash vscode && \
     echo "vscode ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
     mkdir -p /workspace && chown vscode:vscode /workspace
 
-# Đặt user và thư mục làm việc
 USER vscode
 WORKDIR /workspace
 
-# Biến môi trường có thể override khi chạy
+# Biến môi trường có thể chỉnh
 ENV PORT=8585
 ENV TOKEN=11042006
 
-# Lệnh mặc định chạy code-server
+# Chạy VSCode Web tự động
 CMD ["sh", "-c", "code serve-web --host 0.0.0.0 --port $PORT --connection-token $TOKEN --folder-uri file:///workspace"]
