@@ -1,58 +1,66 @@
-# =================================================================================
-# STAGE 1: Builder - Tải, giải nén và chuẩn hóa tên thư mục
-# =================================================================================
+# =========================================================================
+# STAGE 1: Builder - Cài đặt gói VS Code Desktop (đã được chứng minh là hoạt động)
+# =========================================================================
 FROM debian:bullseye-slim AS builder
 
+# Cài các gói cần thiết để thêm repo và cài đặt 'code'
 RUN apt-get update && apt-get install -y \
     curl \
-    tar \
+    gpg \
     ca-certificates \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /tmp
+# Thêm kho của Microsoft
+RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg \
+    && install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg \
+    && echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list \
+    && rm -f packages.microsoft.gpg
 
-ARG TARGETARCH
-RUN case ${TARGETARCH} in \
-        "amd64") ARCH="x64" ;; \
-        "arm64") ARCH="arm64" ;; \
-    esac \
-    && curl -L "https://update.code.visualstudio.com/latest/server-linux-${ARCH}/stable" --output vscode-server.tar.gz \
-    && tar -xzf vscode-server.tar.gz \
-    && mv vscode-server-linux-* vscode-server-final
+# Cài đặt gói 'code'
+RUN apt-get update && apt-get install -y code --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
-# =================================================================================
+# =========================================================================
 # STAGE 2: Final Image - Tạo image cuối cùng để chạy
-# =================================================================================
+# =========================================================================
 FROM debian:bullseye-slim
 
-ENV VSCODE_PORT=8585
+# Dùng biến môi trường cho linh hoạt
+ENV VSCODE_PORT=8080
 ENV VSCODE_TOKEN=11042006
 ENV WORKSPACE_DIR=/workspace
 
+# Cài đặt các thư viện PHỤ THUỘC TỐI THIỂU để 'code' có thể chạy
 RUN apt-get update && apt-get install -y \
     libx11-6 \
     libxkbfile1 \
     libsecret-1-0 \
     libnss3 \
-    libnspr4 \
     libasound2 \
+    libgtk-3-0 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libxshmfence1 \
     ca-certificates \
     && useradd -ms /bin/bash vscode \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /tmp/vscode-server-final /vscode-server
+# Sao chép các file của ứng dụng 'code' từ stage builder
+COPY --from=builder /usr/share/code /usr/share/code
+COPY --from=builder /usr/bin/code /usr/bin/code
 
-RUN mkdir -p ${WORKSPACE_DIR} /home/vscode/.vscode-server \
-    && chown -R vscode:vscode /vscode-server ${WORKSPACE_DIR} /home/vscode
+# Tạo thư mục làm việc và gán quyền
+RUN mkdir -p ${WORKSPACE_DIR} /home/vscode/.vscode \
+    && chown -R vscode:vscode ${WORKSPACE_DIR} /home/vscode
 
+# Chuyển sang user không có quyền root để tăng bảo mật
 USER vscode
 WORKDIR ${WORKSPACE_DIR}
+
 EXPOSE ${VSCODE_PORT}
 
-# THÊM CỜ ĐỂ ĐỒNG Ý VỚI ĐIỀU KHOẢN SỬ DỤNG
-CMD /vscode-server/bin/code-server serve-web \
-    --host 0.0.0.0 \
-    --port ${VSCODE_PORT} \
-    --connection-token ${VSCODE_TOKEN} \
-    --accept-server-license-terms
+# Sử dụng lệnh CMD từ Dockerfile gốc, nhưng với biến môi trường
+CMD ["code", "serve-web", "--host", "0.0.0.0", "--port", "${VSCODE_PORT}", "--connection-token", "${VSCODE_TOKEN}"]
