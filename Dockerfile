@@ -38,7 +38,6 @@ ENV WS=/workspace
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Cài đặt các dependencies tối thiểu mà VS Code Server cần để chạy
-# Thêm 'git' và 'sudo' nếu bạn cần chúng trong môi trường làm việc cuối cùng.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     git \
@@ -53,9 +52,11 @@ RUN apt-get update && \
     # Dọn dẹp cache
     && rm -rf /var/lib/apt/lists/*
 
-# Sao chép các file của VS Code đã được giải nén từ giai đoạn "builder"
+# Sao chép toàn bộ thư mục ứng dụng VS Code từ giai đoạn "builder"
 COPY --from=builder /opt/vscode/usr/share/code /usr/share/code
-COPY --from=builder /opt/vscode/usr/bin/code /usr/bin/code
+
+# Tạo symbolic link để lệnh 'code' có thể truy cập được toàn cục
+RUN ln -s /usr/share/code/bin/code /usr/bin/code
 
 # Tạo user không phải root để tăng cường bảo mật
 RUN useradd -ms /bin/bash coder && \
