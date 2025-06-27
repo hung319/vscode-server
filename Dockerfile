@@ -28,7 +28,6 @@ FROM debian:bullseye-slim
 
 ENV VSCODE_PORT=8080
 ENV WORKSPACE_DIR=/workspace
-# Không cần ENV VSCODE_TOKEN nữa
 
 RUN apt-get update && apt-get install -y \
     libx11-6 \
@@ -50,11 +49,11 @@ USER vscode
 WORKDIR ${WORKSPACE_DIR}
 EXPOSE ${VSCODE_PORT}
 
-# *** THAY ĐỔI CUỐI CÙNG ***
-# Tắt cơ chế connection-token và thêm cờ chấp nhận điều khoản
+# *** LỆNH CMD HOÀN CHỈNH CUỐI CÙNG ***
 CMD /vscode-server/bin/code-server serve-web \
     --host 0.0.0.0 \
     --port ${VSCODE_PORT} \
+    --log debug \
     --user-data-dir /home/vscode/.vscode-server \
     --accept-server-license-terms \
     --without-connection-token
